@@ -12,13 +12,6 @@ chrome.runtime.onInstalled.addListener(function () {
     contexts: ['selection'],
     id: 'post',
   });
-
-  chrome.contextMenus.create({
-    title: 'get',
-    type: 'normal',
-    contexts: ['all'],
-    id: 'get',
-  });
 });
 
 chrome.tabs.onUpdated.addListener(async function (tabId, info, tab) {
@@ -44,7 +37,52 @@ chrome.tabs.onUpdated.addListener(async function (tabId, info, tab) {
     console.log(commits.entries.length);
     if (commits.entries.length != 0) {
       chrome.tabs.sendMessage(tabId, { text: commits }, (response) => {
+        if (chrome.runtime.lastError) {
+          setTimeout(ping, 1000);
+        } else {
+          console.log(response);
+        }
+      });
+    }
+    if (tab.url.includes('https://duckduckgo.com/')) {
+      chrome.tabs.sendMessage(tabId, { text: 'test' }, async (response) => {
         console.log(response);
+        let n = 0;
+        for (res of response) {
+          console.log(res);
+          let data = {
+            urls: res,
+            userId: userId,
+          };
+          let response2 = await fetch('http://0.0.0.0:5000/scrapingData', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json;charset=utf-8',
+            },
+            body: JSON.stringify(data),
+          });
+          let commits = await response2.json();
+          const sentence = commits.sentence;
+          if (sentence == 'error') {
+            n++;
+            continue;
+          }
+          if (sentence.length != 0) {
+            chrome.tabs.sendMessage(
+              tabId,
+              { text: 'displayAbstract', sentence: sentence, num: n },
+              (response) => {
+                if (chrome.runtime.lastError) {
+                  setTimeout(ping, 1000);
+                } else {
+                  console.log(response);
+                }
+              }
+            );
+          }
+          n++;
+          console.log(commits.sentence);
+        }
       });
     }
     console.log(commits);

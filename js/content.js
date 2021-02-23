@@ -87,6 +87,19 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
     // let dom_text = div;
     // console.log('test', test);
     sendResponse(sendData);
+  } else if (request.text == 'test') {
+    let test = document.querySelectorAll('.result__a');
+    let list = [];
+    for (let i of test) {
+      list.push(i.href);
+    }
+    console.log(list);
+    sendResponse(list);
+  } else if (request.text == 'displayAbstract') {
+    let doms = document.querySelectorAll('.result__snippet');
+    console.log(request.num, doms);
+    doms[request.num].innerHTML = request.sentence;
+    sendResponse('ok');
   } else {
     console.log(request.text);
     // for (const content in request.text.entries) {
